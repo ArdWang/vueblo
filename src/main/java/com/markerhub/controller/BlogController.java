@@ -9,7 +9,6 @@ import com.markerhub.common.lang.Result;
 import com.markerhub.entity.Blog;
 import com.markerhub.service.BlogService;
 import com.markerhub.util.ShiroUtil;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -49,6 +48,19 @@ public class BlogController {
         return Result.success(blog);
     }
 
+    // 删除博客
+    @RequiresAuthentication
+    @GetMapping("blog/edit/{id}")
+    public Result delete(@PathVariable(name = "id") Long id){
+        Blog blog = blogService.getById(id);
+        Assert.notNull(blog, "该博客已经删除");
+        if(blogService.removeById(id)){
+            return Result.success("删除成功!");
+        }else{
+            return Result.fail("删除博客失败!");
+        }
+    }
+
 
     @RequiresAuthentication
     @PostMapping("/blog/edit")
@@ -60,7 +72,6 @@ public class BlogController {
             // 只能编辑自己的文章
             Assert.isTrue(temp.getUserId().longValue() == ShiroUtil.getProfile().getId().longValue(),
                     "没有权限编辑");
-
         }else{
 
             temp = new Blog();
@@ -69,10 +80,8 @@ public class BlogController {
             temp.setStatus(0);
         }
 
-
         BeanUtil.copyProperties(blog, temp, "id", "userId","created","status");
         blogService.saveOrUpdate(temp);
-
         return Result.success("添加成功!");
     }
 
